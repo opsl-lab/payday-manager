@@ -70,7 +70,18 @@ function settingsData(){
 }
 function settingsUpdates(values){return values.flatMap((row,i)=>i>=settingsRows.length||row[0]==='アプリ個人設定JSON'?[{range:q(CONFIG_TAB)+`!A${i+1}:C${i+1}`,values:[row]}]:[])}
 async function saveSettings(){const values=settingsData();await api('/values:batchUpdate',{method:'POST',body:JSON.stringify({valueInputOption:'RAW',data:settingsUpdates(values)})});settingsRows=values}
-function resolveItem(row){const bi=banks.findIndex(b=>b.name===row[1]);if(bi<0)throw new Error('未登録の銀行：'+row[1]);const ii=banks[bi].items.findIndex(i=>i[0]===row[2]);if(ii<0)throw new Error('未登録の支払い項目：'+row[2]);return[bi,ii]}
+function nameKey(value){return String(value??'').normalize('NFKC').replace(/\s/g,'')}
+function paymentNameKey(value){return nameKey(value).replace(/^固定資産税(?:\(納税月(?:のみ)?\))?$/,'固定資産税')}
+function resolveItem(row){
+ const bankMatches=banks.map((b,i)=>[b,i]).filter(([b])=>nameKey(b.name)===nameKey(row[1]));
+ if(bankMatches.length!==1)throw new Error('未登録または重複した銀行：'+row[1]);
+ const [bank,bi]=bankMatches[0];
+ let matches=bank.items.map((item,i)=>[item,i]).filter(([item])=>item[0]===row[2]);
+ if(!matches.length)matches=bank.items.map((item,i)=>[item,i]).filter(([item])=>paymentNameKey(item[0])===paymentNameKey(row[2]));
+ if(matches.length!==1)throw new Error('未登録または重複した支払い項目：'+row[2]);
+ return[bi,matches[0][1]];
+}
+function samePayment(row,bi,ii){const found=resolveItem(row);return found[0]===bi&&found[1]===ii}
 function fingerprints(p,s){const out={};for(const [t,rows] of [[TAB,p],[STATE_TAB,s]])for(const r of rows.slice(1)){if(monthPattern.test(r[0]||''))(out[r[0]]??=[]).push([t,...r.slice(0,7)])}return Object.fromEntries(Object.entries(out).map(([m,r])=>[m,JSON.stringify(r)]))}
 async function canonicalTables(){const [p,s]=await Promise.all([readTab(TAB),readTab(STATE_TAB)]);const pr=p.values||[],sr=s.values||[];validateTable(TAB,pr);validateTable(STATE_TAB,sr);return[pr,sr]}
 async function readAll(){
@@ -100,15 +111,15 @@ async function remoteLoad(month){
 }
 async function persist(month,snapshot){
  requireAuth();const [p,s]=await canonicalTables();
- const alreadyMatches=banks.every((b,bi)=>b.items.every((item,ii)=>{const rows=p.filter(r=>r[0]===month&&r[1]===b.name&&r[2]===item[0]);return rows.length===1&&money(rows[0][3])===(snapshot.payments[bi][ii]??null)})&&(()=>{const rows=s.filter(r=>r[0]===month&&r[1]===b.name);return rows.length===1&&money(rows[0][3])===(snapshot.balances[bi]??null)&&money(rows[0][4])===(snapshot.deposits[bi]??null)&&(rows[0][2]==='不明')===snapshot.unknown[bi]})());
+ const alreadyMatches=banks.every((b,bi)=>b.items.every((item,ii)=>{const rows=p.filter(r=>r[0]===month&&samePayment(r,bi,ii));return rows.length===1&&money(rows[0][3])===(snapshot.payments[bi][ii]??null)})&&(()=>{const rows=s.filter(r=>r[0]===month&&r[1]===b.name);return rows.length===1&&money(rows[0][3])===(snapshot.balances[bi]??null)&&money(rows[0][4])===(snapshot.deposits[bi]??null)&&(rows[0][2]==='不明')===snapshot.unknown[bi]})());
  if((fingerprints(p,s)[month]||'')!==(canonicalBaseline[month]||'')&&!alreadyMatches)throw new Error('この月はシート側で変更されています。入力を控え、再読込ボタンで変更を確認してください');
  const updates=[],stamp=new Date().toISOString();let pn=Math.max(1,p.length)+1,sn=Math.max(1,s.length)+1;
  if(!p.length)updates.push({range:q(TAB)+'!A1:G1',values:[HEADERS[TAB]]});
  if(!s.length)updates.push({range:q(STATE_TAB)+'!A1:G1',values:[HEADERS[STATE_TAB]]});
  for(let bi=0;bi<banks.length;bi++){
   for(let ii=0;ii<banks[bi].items.length;ii++){
-   const item=banks[bi].items[ii];const matches=p.map((r,i)=>[r,i+1]).filter(([r])=>r[0]===month&&r[1]===banks[bi].name&&r[2]===item[0]);if(matches.length>1)throw new Error('支払い明細の重複を解消してください');
-   const rowNum=matches[0]?.[1]||pn++;const row=[month,banks[bi].name,item[0],snapshot.payments[bi][ii]??'',matches[0]?.[0][4]||(item[2]==='fixed'?'固定':'変動'),matches[0]?.[0][5]||bi+'-'+ii,stamp];
+   const item=banks[bi].items[ii];const matches=p.map((r,i)=>[r,i+1]).filter(([r])=>r[0]===month&&samePayment(r,bi,ii));if(matches.length>1)throw new Error('支払い明細の重複を解消してください');
+   const rowNum=matches[0]?.[1]||pn++;const row=[month,matches[0]?.[0][1]??banks[bi].name,matches[0]?.[0][2]??item[0],snapshot.payments[bi][ii]??'',matches[0]?.[0][4]||(item[2]==='fixed'?'固定':'変動'),matches[0]?.[0][5]||bi+'-'+ii,stamp];
    updates.push({range:q(TAB)+`!A${rowNum}:G${rowNum}`,values:[row]});
   }
   const matches=s.map((r,i)=>[r,i+1]).filter(([r])=>r[0]===month&&r[1]===banks[bi].name);if(matches.length>1)throw new Error('口座残高・入金の重複を解消してください');
