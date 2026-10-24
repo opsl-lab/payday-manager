@@ -71,7 +71,7 @@ function settingsData(){
 function settingsUpdates(values){return values.flatMap((row,i)=>i>=settingsRows.length||row[0]==='アプリ個人設定JSON'?[{range:q(CONFIG_TAB)+`!A${i+1}:C${i+1}`,values:[row]}]:[])}
 async function saveSettings(){const values=settingsData();await api('/values:batchUpdate',{method:'POST',body:JSON.stringify({valueInputOption:'RAW',data:settingsUpdates(values)})});settingsRows=values}
 function nameKey(value){return String(value??'').normalize('NFKC').replace(/\s/g,'')}
-function paymentNameKey(value){return nameKey(value).replace(/^固定資産税(?:\(納税月(?:のみ)?\))?$/,'固定資産税')}
+function paymentNameKey(value){return nameKey(value).replace(/^固定資産税(?:\((?:納税月(?:のみ)?|実際に支払った月のみ)\))?$/,'固定資産税')}
 function resolveItem(row){
  const bankMatches=banks.map((b,i)=>[b,i]).filter(([b])=>nameKey(b.name)===nameKey(row[1]));
  if(bankMatches.length!==1)throw new Error('未登録または重複した銀行：'+row[1]);
