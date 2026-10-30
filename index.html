@@ -19,7 +19,8 @@ input,select,textarea{scroll-margin-block:20px}
  .nav a{min-width:0}
  .cloud-setup button{max-width:100%}
 }
-</style><link rel="apple-touch-icon" href="./app-icon.png"><link rel="icon" type="image/png" href="./app-icon.png"></head><body><main class="app" id="top"><header class="hero"><h1>支払管理</h1><select id="month" class="month" aria-label="対象月"></select></header><div id="dataArea" class="locked"><section class="kpi"><small>あと入金が必要な金額</small><strong id="total">¥0</strong><small>銀行ごとの入金準備額の合計</small></section><div class="card-meta"><div class="notice">入力後、画面下部に「Googleに保存済み」と表示されたことを確認してから閉じてください。</div><div class="connection-actions"><button id="openConnection" type="button">接続設定</button></div></div><nav class="nav"><a href="#summary">銀行別集計</a><a href="#payments">支払い入力</a><a href="#balances">残高・入金</a></nav><section id="summary"><h2 class="section-title">銀行別の入金準備</h2><div class="bank-summary" id="summaryRows"></div><p class="hint">固定入金額などの設定は、接続した非公開スプレッドシートから読み込みます。</p></section><section id="payments"><h2 class="section-title">支払い金額の入力</h2><p class="hint">銀行名をタップすると支払い項目が開きます。固定額も変更できます。</p><div id="paymentGroups"></div><a class="top" href="#top">↑ トップへ戻る</a></section><section id="balances"><h2 class="section-title">口座残高・入金額の入力</h2><div class="balances" id="balanceRows"></div><p class="hint">残高は振り分け前の金額です。分からない銀行は「不明」を選べます（計算上は0円）。入金済みは今回すでに入金した金額です。</p><a class="top" href="#top">↑ トップへ戻る</a></section><p class="hint" id="saveStatus" aria-live="polite">Googleに保存</p><div class="actions"><button id="reset">この月の入力を初期値に戻す</button></div><p class="foot">支払管理<br>Googleスプレッドシート連携版</p></div><dialog id="authScreen" class="auth-screen" aria-labelledby="authTitle"><div class="auth-shell"><header class="auth-header"><h1 id="authTitle">Googleに接続</h1><button type="button" id="closeAuthScreen" hidden>管理画面へ戻る</button></header><section class="cloud-setup" id="cloudSetup"><h2>Googleスプレッドシート連携</h2><p>ログインすると、前回のスプレッドシートに自動接続します。</p><label for="sheetId">スプレッドシートのURLまたはID</label><input id="sheetId" autocomplete="off" spellcheck="false" placeholder="https://docs.google.com/spreadsheets/d/…"><button id="login" type="button">Googleでログイン</button><button id="connect" type="button" class="secondary" disabled>シートに接続</button><button id="logout" type="button" class="secondary" disabled>ログアウト</button><div class="cloud-state" id="cloudState" aria-live="polite">未ログイン</div><small>ログインにはGoogle CloudのOAuthクライアントIDが必要です。シートは自分のGoogleアカウントだけに共有してください。</small></section><section class="app" style="padding-top:0;padding-bottom:0"><div class="cloud-card" id="privateSetup" style="display:none"><strong>初回のみ：個人設定を登録</strong><p class="hint">個人設定JSONを選ぶと、非公開のGoogleスプレッドシートに登録します。JSONはGitHubにアップロードしないでください。</p><input type="file" id="configFile" accept=".json,application/json"><button id="importConfig" type="button">個人設定を登録</button><p id="configState" class="hint"></p></div></section></div></dialog></main><script src="https://accounts.google.com/gsi/client" async defer></script><script>
+</style><link rel="apple-touch-icon" href="./app-icon.png"><link rel="icon" type="image/png" href="./app-icon.png"><style id="deposit-history-style">.bank-balance-block{border-bottom:1px solid #f0e9e0;min-width:300px}.bank-balance-block:last-child{border-bottom:0}.bank-balance-block>.balance{border-bottom:0}.deposit-summary{min-width:0;text-align:right}.deposit-total{display:block;font-size:16px;font-weight:600;line-height:1.5;color:#513e30;white-space:nowrap}.deposit-history-toggle{font:inherit;font-size:12px;min-height:32px;border:0;background:transparent;color:#806956;text-decoration:underline;cursor:pointer;padding:3px 0}.deposit-add-row{display:grid;grid-template-columns:62px minmax(0,1fr) 82px;gap:7px;align-items:center;padding:0 8px 12px;font-size:12px}.deposit-add-row input,.deposit-edit input{min-width:0;width:100%;font-size:16px;padding:11px 8px;border:1px solid #e8dccc;border-radius:9px;background:#fbf5ec;color:#513e30;text-align:right;box-sizing:border-box}.deposit-add-row button,.deposit-history-row button,.deposit-edit button{min-height:44px;cursor:pointer;font:inherit;font-size:12px;border:1px solid #d7c5b1;border-radius:9px;padding:8px;background:#f2e9dc;color:#5a4434}.deposit-input-error{margin:0;padding:0 8px 10px;font-size:12px;color:#9a573f;white-space:normal;overflow-wrap:anywhere}.deposit-history{margin:0 8px 12px;padding:6px 10px;background:#faf8f4;border:1px solid #eee6dd;border-radius:10px}.deposit-history-row{display:flex;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid #eee6dd}.deposit-history-row:last-child{border-bottom:0}.deposit-history-amount{flex:1;min-width:0;font-size:12px;overflow-wrap:anywhere}.deposit-history-amount small{font-size:10px;margin-left:5px;color:#947f70}.deposit-history-amount strong{display:block;font-size:16px;margin-top:3px}.deposit-history-row button{min-height:38px;flex:0 0 auto}.deposit-edit{width:calc(100% - 28px);max-width:400px;max-height:calc(100dvh - 40px);overflow:auto;padding:20px;border:1px solid #e8dccc;border-radius:16px;background:#faf8f4;color:#514236}.deposit-edit::backdrop{background:#35281f66}.deposit-edit h2{font-size:18px;margin:0 0 10px}.deposit-edit p,.deposit-edit label{font-size:13px;line-height:1.6;overflow-wrap:anywhere}.deposit-edit input{margin-top:7px}.deposit-edit .actions{margin-bottom:0}
+</style></head><body><main class="app" id="top"><header class="hero"><h1>支払管理</h1><select id="month" class="month" aria-label="対象月"></select></header><div id="dataArea" class="locked"><section class="kpi"><small>あと入金が必要な金額</small><strong id="total">¥0</strong><small>銀行ごとの入金準備額の合計</small></section><div class="card-meta"><div class="notice">入力後、画面下部に「Googleに保存済み」と表示されたことを確認してから閉じてください。</div><div class="connection-actions"><button id="openConnection" type="button">接続設定</button></div></div><nav class="nav"><a href="#summary">銀行別集計</a><a href="#payments">支払い入力</a><a href="#balances">残高・入金</a></nav><section id="summary"><h2 class="section-title">銀行別の入金準備</h2><div class="bank-summary" id="summaryRows"></div><p class="hint">固定入金額などの設定は、接続した非公開スプレッドシートから読み込みます。</p></section><section id="payments"><h2 class="section-title">支払い金額の入力</h2><p class="hint">銀行名をタップすると支払い項目が開きます。固定額も変更できます。</p><div id="paymentGroups"></div><a class="top" href="#top">↑ トップへ戻る</a></section><section id="balances"><h2 class="section-title">口座残高・入金額の入力</h2><div class="balances" id="balanceRows"></div><p class="hint">残高は振り分け前の金額です。分からない銀行は「不明」を選べます（計算上は0円）。入金は今回の金額を入力して「追加する」で登録します。修正・削除は「入金履歴」から行えます。</p><a class="top" href="#top">↑ トップへ戻る</a></section><p class="hint" id="saveStatus" aria-live="polite">Googleに保存</p><div class="actions"><button id="retryDepositSave" type="button" hidden>保存を再試行</button><button id="reloadDepositMonth" type="button" hidden>Googleから再読込</button><button id="reset">この月の入力を初期値に戻す</button></div><p class="foot">支払管理<br>Googleスプレッドシート連携版</p></div><dialog id="authScreen" class="auth-screen" aria-labelledby="authTitle"><div class="auth-shell"><header class="auth-header"><h1 id="authTitle">Googleに接続</h1><button type="button" id="closeAuthScreen" hidden>管理画面へ戻る</button></header><section class="cloud-setup" id="cloudSetup"><h2>Googleスプレッドシート連携</h2><p>ログインすると、前回のスプレッドシートに自動接続します。</p><label for="sheetId">スプレッドシートのURLまたはID</label><input id="sheetId" autocomplete="off" spellcheck="false" placeholder="https://docs.google.com/spreadsheets/d/…"><button id="login" type="button">Googleでログイン</button><button id="connect" type="button" class="secondary" disabled>シートに接続</button><button id="logout" type="button" class="secondary" disabled>ログアウト</button><div class="cloud-state" id="cloudState" aria-live="polite">未ログイン</div><small>ログインにはGoogle CloudのOAuthクライアントIDが必要です。シートは自分のGoogleアカウントだけに共有してください。</small></section><section class="app" style="padding-top:0;padding-bottom:0"><div class="cloud-card" id="privateSetup" style="display:none"><strong>初回のみ：個人設定を登録</strong><p class="hint">個人設定JSONを選ぶと、非公開のGoogleスプレッドシートに登録します。JSONはGitHubにアップロードしないでください。</p><input type="file" id="configFile" accept=".json,application/json"><button id="importConfig" type="button">個人設定を登録</button><p id="configState" class="hint"></p></div></section></div></dialog><dialog id="depositEditDialog" class="deposit-edit" aria-labelledby="deposit-edit-title"><h2 id="deposit-edit-title">入金額の修正</h2><p id="deposit-edit-description"></p><label for="deposit-edit-amount">入金額（円）</label><input id="deposit-edit-amount" type="number" inputmode="numeric" min="1" step="1"><p id="deposit-edit-error" role="alert"></p><div class="actions"><button id="deposit-edit-cancel" type="button">キャンセル</button><button id="deposit-edit-apply" type="button">変更を確認</button></div></dialog></main><script src="https://accounts.google.com/gsi/client" async defer></script><script>
 let banks=[];
 const fmt=n=>'¥'+Math.round(n).toLocaleString('ja-JP');const now=new Date();const months=[];for(let y=2026;y<=2031;y++)for(let m=1;m<=12;m++)months.push(`${y}-${String(m).padStart(2,'0')}`);const sel=document.getElementById('month');sel.innerHTML=months.map(m=>`<option value="${m}">${m.slice(0,4)}年${+m.slice(5)}月分</option>`).join('');sel.value=months.includes(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`)?`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`:'2026-10';
 // GitHub Pages: Google Identity Services + Google Sheets REST API.
@@ -31,7 +32,7 @@ let saveTimer=null,revision=0,activeMonth=sel.value,writeChain=Promise.resolve()
 const $=id=>document.getElementById(id);
 function status(s){$('saveStatus').textContent=s;if(s.startsWith('保存失敗：'))authSaveNeedsRetry=true;else if(s==='Googleに保存済み')authSaveNeedsRetry=false}
 function cloudStatus(s){$('cloudState').textContent=s}
-function lock(locked){$('dataArea').classList.toggle('locked',locked)}
+function lock(locked){$('dataArea').classList.toggle('locked',locked);$('dataArea').inert=locked}
 function extractId(s){const t=s.trim();const m=t.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);return m?m[1]:/^[a-zA-Z0-9_-]{20,}$/.test(t)?t:''}
 function requireAuth(){if(!accessToken)throw new Error('Googleにログインしてください');if(!sheetId)throw new Error('シートを接続してください')}
 async function api(path,options={}){
@@ -78,76 +79,132 @@ let cloudRows={};
 let paymentRowIndex={};
 let stateRowIndex={};
 function itemKey(month,bi,ii){return month+'|'+bi+'-'+ii}
-async function readAll(){
- const [paymentResult,stateResult]=await Promise.all([
-  api('/values/'+encodeURIComponent(TAB+'!A1:G10000')),
-  api('/values/'+encodeURIComponent(STATE_TAB+'!A1:B1000'))
- ]);
- const paymentRows=paymentResult.values||[], stateRows=stateResult.values||[];
- const result={};paymentRowIndex={};stateRowIndex={};
- // Backward compatible with any older month-JSON rows, without deleting them.
- for(let r=0;r<paymentRows.length;r++){
-  const row=paymentRows[r],month=row[0]||'';
-  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))continue;
-  if(!result[month])result[month]=defaults();
-  if(row.length<=2 && row[1]?.startsWith('{')){
-   try{result[month]=JSON.parse(row[1])}catch(e){};continue;
-  }
-  const id=row[5]||'';const parts=id.match(/^(\d+)-(\d+)$/);
-  if(!parts)continue;
-  const bi=+parts[1],ii=+parts[2];
-  if(!banks[bi]?.items[ii])continue;
-  paymentRowIndex[itemKey(month,bi,ii)]=r+1;
-  result[month].payments[bi][ii]=row[3]===''||row[3]===undefined?null:n(row[3]);
- }
- for(let r=0;r<stateRows.length;r++){
-  const row=stateRows[r],month=row[0]||'';
-  if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month))continue;
-  try{
-   const st=JSON.parse(row[1]);if(!result[month])result[month]=defaults();
-   if(Array.isArray(st.balances))result[month].balances=st.balances;
-   if(Array.isArray(st.deposits))result[month].deposits=st.deposits;
-   if(Array.isArray(st.unknown))result[month].unknown=st.unknown;
-   stateRowIndex[month]=r+1;
-  }catch(e){}
- }
- return result;
+// Version 1 extends PaydayMonthly JSON; legacy deposits remains the summed amount.
+const DEPOSIT_HISTORY_VERSION=1;
+let depositEditContext=null;
+function validDepositAmount(value,allowZero=false){
+ const amount=Number(value);
+ if(value==null||value===''||!Number.isFinite(amount)||amount<0||(!allowZero&&amount===0)||amount>Number.MAX_SAFE_INTEGER)throw new Error('入金額が正しくありません');
+ return amount;
 }
+function sumDepositEntries(entries){let total=0;const ids=new Set();for(const entry of entries){if(!entry||typeof entry.id!=='string'||!entry.id||ids.has(entry.id))throw new Error('入金履歴のIDが不正または重複しています');ids.add(entry.id);total+=validDepositAmount(entry.amount);if(total>Number.MAX_SAFE_INTEGER)throw new Error('入金済み合計が大きすぎます')}return total}
+function normalizeDepositHistory(d){
+ if(d.depositHistoryVersion!=null&&d.depositHistoryVersion!==DEPOSIT_HISTORY_VERSION)throw new Error('この入金履歴は新しいバージョンで保存されています');
+ if(d.deposits!=null&&!Array.isArray(d.deposits))throw new Error('入金済みデータの形式が正しくありません');
+ if(d.depositHistory!=null&&!Array.isArray(d.depositHistory))throw new Error('入金履歴の形式が正しくありません');
+ if((d.deposits?.length||0)>banks.length||(d.depositHistory?.length||0)>banks.length)throw new Error('入金データの銀行数が個人設定と一致しません');
+ const deposits=[],histories=[];
+ banks.forEach((_,bi)=>{
+  const oldTotal=d.deposits?.[bi]==null?0:validDepositAmount(d.deposits[bi],true),existing=d.depositHistory?.[bi];
+  if(existing==null){histories[bi]=oldTotal>0?[{id:'legacy-'+bi,amount:oldTotal,legacy:true}]:[];deposits[bi]=oldTotal}
+  else{if(!Array.isArray(existing))throw new Error('入金履歴の形式が正しくありません');const total=sumDepositEntries(existing);if(d.deposits?.[bi]!=null&&total!==oldTotal)throw new Error('入金済み合計と履歴が一致しません。元データを確認してください');histories[bi]=existing;deposits[bi]=total}
+ });
+ d.depositHistory=histories;d.deposits=deposits;d.depositHistoryVersion=DEPOSIT_HISTORY_VERSION;return d;
+}
+function newDepositId(){return window.crypto?.randomUUID?.()||'deposit-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2)}
+function enteredDepositAmount(input){const value=input.value.trim(),amount=validDepositAmount(value);if(!Number.isSafeInteger(amount))throw new Error('入金額は1円以上の整数で入力してください');return amount}
+function depositInputError(bi,message){const el=$('deposit-error-'+bi);el.textContent=message;el.hidden=!message}
+function changeBankDeposits(d,bi,entries){const total=sumDepositEntries(entries);d.depositHistory[bi]=entries;d.deposits[bi]=total;refreshBankDeposits(bi);update();save()}
+function addDeposit(bi){
+ try{if(!loadedMonths.has(sel.value))throw new Error('対象月を読み込んでください');const input=$('deposit-add-'+bi),amount=enteredDepositAmount(input),d=data();const entries=[...d.depositHistory[bi],{id:newDepositId(),amount}];sumDepositEntries(entries);input.value='';depositInputError(bi,'');changeBankDeposits(d,bi,entries)}
+ catch(e){depositInputError(bi,e.message)}
+}
+function renderDepositHistory(bi){
+ const entries=data().depositHistory[bi],target=$('deposit-history-'+bi);
+ target.innerHTML=entries.length?'<div class="deposit-history-list">'+entries.map((entry,index)=>`<div class="deposit-history-row"><span class="deposit-history-amount">${index+1}回目${entry.legacy?'<small>引き継ぎ</small>':''}<strong>${fmt(entry.amount)}</strong></span><button type="button" data-deposit-action="edit" data-bi="${bi}" data-entry-id="${esc(entry.id)}" aria-label="${esc(banks[bi].name)} ${index+1}回目の入金を修正">修正</button><button type="button" data-deposit-action="delete" data-bi="${bi}" data-entry-id="${esc(entry.id)}" aria-label="${esc(banks[bi].name)} ${index+1}回目の入金を削除">削除</button></div>`).join('')+'</div>':'<p class="hint">入金履歴はまだありません。</p>';
+}
+function refreshBankDeposits(bi){$('deposit-total-'+bi).textContent=fmt(data().deposits[bi]);if(!$('deposit-history-'+bi).hidden)renderDepositHistory(bi)}
+function openDepositEdit(bi,id){const d=data(),entry=d.depositHistory[bi].find(e=>e.id===id);if(!entry)return;depositEditContext={month:sel.value,bi,id,amount:entry.amount};$('deposit-edit-description').textContent=sel.value+'／'+banks[bi].name;$('deposit-edit-amount').value=entry.amount;$('deposit-edit-error').textContent='';$('depositEditDialog').showModal();$('deposit-edit-amount').focus()}
+function applyDepositEdit(){
+ try{const context=depositEditContext;if(!context||context.month!==sel.value)throw new Error('対象月が変更されたため、履歴を開き直してください');const {bi,id,amount:old}=context,d=data(),entry=d.depositHistory[bi].find(e=>e.id===id);if(!entry||entry.amount!==old)throw new Error('入金履歴が変更されています。開き直してください');const amount=enteredDepositAmount($('deposit-edit-amount'));if(!confirm(banks[bi].name+'の入金を '+fmt(old)+' から '+fmt(amount)+' に変更しますか？'))return;const entries=d.depositHistory[bi].map(e=>e.id===id?{...e,amount}:e);sumDepositEntries(entries);$('depositEditDialog').close();depositEditContext=null;changeBankDeposits(d,bi,entries)}catch(e){$('deposit-edit-error').textContent=e.message}
+}
+function deleteDeposit(bi,id){const d=data(),entry=d.depositHistory[bi].find(e=>e.id===id);if(!entry)return;if(!confirm(banks[bi].name+'の入金 '+fmt(entry.amount)+' を削除しますか？'))return;changeBankDeposits(d,bi,d.depositHistory[bi].filter(e=>e.id!==id))}
+function renderBalanceRows(){
+ const d=data(),rows=$('balanceRows');
+ rows.innerHTML='<div class="balance head"><span>銀行</span><span>残高 / 不明</span><span>入金済み合計</span></div>'+banks.map((b,bi)=>`<div class="bank-balance-block"><div class="balance"><span>${esc(b.name)}</span><div class="balance-control"><label class="unknown-label"><input type="checkbox" data-kind="unknown" data-bi="${bi}" ${d.unknown[bi]?'checked':''}> 不明</label><input aria-label="${esc(b.name)} 残高" type="number" inputmode="numeric" min="0" data-kind="balances" data-bi="${bi}" value="${d.balances[bi]??''}" placeholder="0" ${d.unknown[bi]?'disabled':''}></div><div class="deposit-summary"><output class="deposit-total" id="deposit-total-${bi}" aria-label="${esc(b.name)} 入金済み合計" aria-live="polite">${fmt(d.deposits[bi])}</output><button class="deposit-history-toggle" id="deposit-toggle-${bi}" type="button" data-deposit-action="history" data-bi="${bi}" aria-controls="deposit-history-${bi}" aria-expanded="false">入金履歴</button></div></div><div class="deposit-add-row"><label for="deposit-add-${bi}">追加入金</label><input id="deposit-add-${bi}" data-deposit-add="${bi}" type="number" inputmode="numeric" min="1" step="1" placeholder="今回の金額" aria-label="${esc(b.name)} 今回の入金額"><button type="button" data-deposit-action="add" data-bi="${bi}" aria-label="${esc(b.name)} 入金を追加する">追加する</button></div><p class="deposit-input-error" id="deposit-error-${bi}" role="alert" hidden></p><div id="deposit-history-${bi}" class="deposit-history" hidden></div></div>`).join('');
+ rows.querySelectorAll('input[data-kind]').forEach(el=>el.addEventListener('input',()=>{const bi=+el.dataset.bi;if(el.dataset.kind==='unknown'){d.unknown[bi]=el.checked;rows.querySelector(`input[data-kind="balances"][data-bi="${bi}"]`).disabled=el.checked}else d.balances[bi]=el.value===''?null:n(el.value);update();save()}));
+}
+$('balanceRows').addEventListener('click',event=>{const button=event.target.closest?.('button[data-deposit-action]');if(!button)return;const bi=+button.dataset.bi,action=button.dataset.depositAction;if(action==='add')addDeposit(bi);else if(action==='history'){const history=$('deposit-history-'+bi);history.hidden=!history.hidden;button.setAttribute('aria-expanded',String(!history.hidden));button.textContent=history.hidden?'入金履歴':'履歴を閉じる';if(!history.hidden)renderDepositHistory(bi)}else if(action==='edit')openDepositEdit(bi,button.dataset.entryId);else if(action==='delete')deleteDeposit(bi,button.dataset.entryId)});
+$('balanceRows').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.dataset.depositAdd!=null){event.preventDefault();addDeposit(+event.target.dataset.depositAdd)}});
+$('deposit-edit-cancel').addEventListener('click',()=>{$('depositEditDialog').close();depositEditContext=null});
+$('deposit-edit-apply').addEventListener('click',applyDepositEdit);
+$('depositEditDialog').addEventListener('cancel',()=>{depositEditContext=null});
+
+let monthlyBaseline={},monthlyExtras={},pendingSaves=new Map(),monthlyWriteCandidates=new Map();
+const depositMonthPattern=/^20\d{2}-(0[1-9]|1[0-2])$/;
+async function readAll(){
+ const [pr,sr]=await Promise.all([api('/values/'+encodeURIComponent(TAB+'!A:G')),api('/values/'+encodeURIComponent(STATE_TAB+'!A:B'))]);
+ const result={};paymentRowIndex={};stateRowIndex={};monthlyBaseline={};monthlyExtras={};
+ for(let r=0;r<(pr.values||[]).length;r++){
+  const row=pr.values[r],month=row[0];if(!depositMonthPattern.test(month||''))continue;result[month]??=defaults();
+  if(row.length<=2&&String(row[1]).startsWith('{')){try{result[month]=JSON.parse(row[1])}catch(e){throw new Error(month+'の旧月別データを読み込めません')}continue}
+  const match=String(row[5]||'').match(/^(\d+)-(\d+)$/);if(!match)continue;const bi=+match[1],ii=+match[2];if(!banks[bi]?.items[ii])continue;
+  const key=itemKey(month,bi,ii);if(paymentRowIndex[key])throw new Error(month+'の支払い項目IDが重複しています：'+row[5]);paymentRowIndex[key]=r+1;result[month].payments[bi][ii]=row[3]===''||row[3]==null?null:n(row[3]);
+ }
+ for(let r=0;r<(sr.values||[]).length;r++){
+  const row=sr.values[r],month=row[0];if(!depositMonthPattern.test(month||''))continue;if(stateRowIndex[month])throw new Error(month+'の残高・入金データが重複しています');
+  let st;try{st=JSON.parse(row[1])}catch(e){throw new Error(month+'の残高・入金データを読み込めません')}
+  if(!st||typeof st!=='object')throw new Error(month+'の残高・入金データが不正です');result[month]??=defaults();
+  for(const key of ['balances','unknown','deposits'])if(st[key]!=null){if(!Array.isArray(st[key]))throw new Error(month+'の'+key+'が不正です');result[month][key]=st[key]}
+  if(st.deposits!=null){delete result[month].depositHistory;delete result[month].depositHistoryVersion}
+  if(st.depositHistory!=null)result[month].depositHistory=st.depositHistory;
+  if(st.depositHistoryVersion!=null)result[month].depositHistoryVersion=st.depositHistoryVersion;
+  stateRowIndex[month]=r+1;monthlyBaseline[month]=row[1];monthlyExtras[month]=st;
+ }
+ for(const month of Object.keys(result))normalizeDepositHistory(result[month]);return result;
+}
+function monthlyCore(d){return JSON.stringify({balances:d.balances,unknown:d.unknown,deposits:d.deposits,depositHistory:d.depositHistory,depositHistoryVersion:d.depositHistoryVersion})}
+async function persist(month,snapshot){
+ requireAuth();normalizeDepositHistory(snapshot);
+ const [pr,sr]=await Promise.all([api('/values/'+encodeURIComponent(TAB+'!A:G')),api('/values/'+encodeURIComponent(STATE_TAB+'!A:B'))]);
+ const payments=pr.values||[],states=sr.values||[],found=states.map((row,i)=>({row,index:i+1})).filter(({row})=>row[0]===month);
+ if(found.length>1)throw new Error('対象月の残高・入金データが重複しています');
+ const current=found[0]?.row[1];let currentState={};if(current!=null){try{currentState=JSON.parse(current)}catch(e){throw new Error('保存先の月別データが不正です')}}
+ if(current!==(monthlyBaseline[month]??undefined)){
+  let matches=false;try{const core=monthlyCore(normalizeDepositHistory(JSON.parse(current)));matches=core===monthlyCore(snapshot)||monthlyWriteCandidates.get(month)?.has(core)}catch(e){}
+  if(!matches)throw new Error('別の画面でこの月が変更されています。入力を控え、Googleから再読込して確認してください');
+ }
+ const updates=[],stamp=new Date().toISOString(),newPaymentIndex={};let next=payments.length+1;
+ for(let bi=0;bi<banks.length;bi++)for(let ii=0;ii<banks[bi].items.length;ii++){
+  const item=banks[bi].items[ii],id=bi+'-'+ii,matches=payments.map((row,i)=>({row,index:i+1})).filter(({row})=>row[0]===month&&row[5]===id);
+  if(matches.length>1)throw new Error('支払い項目IDが重複しています：'+id);const row=matches[0]?.index||next++;newPaymentIndex[itemKey(month,bi,ii)]=row;
+  updates.push({range:`'${TAB}'!A${row}:G${row}`,values:[[month,banks[bi].name,item[0],snapshot.payments[bi][ii]??'',item[2]||'',id,stamp]]});
+ }
+ const state={...currentState,balances:snapshot.balances,unknown:snapshot.unknown,deposits:snapshot.deposits,depositHistoryVersion:DEPOSIT_HISTORY_VERSION,depositHistory:snapshot.depositHistory};
+ const serialized=JSON.stringify(state);if(serialized.length>50000)throw new Error('この月の履歴がシートの1セル保存上限を超えています。履歴は画面に保持しています');
+ const stateRow=found[0]?.index||states.length+1;updates.push({range:`'${STATE_TAB}'!A${stateRow}:B${stateRow}`,values:[[month,serialized]]});
+ if(next>payments.length+1||!found.length){const meta=await api('?fields=sheets.properties'),requests=[];for(const [tab,required] of [[TAB,next-1],[STATE_TAB,stateRow]]){const props=meta.sheets?.find(s=>s.properties.title===tab)?.properties;if(props?.gridProperties?.rowCount<required)requests.push({appendDimension:{sheetId:props.sheetId,dimension:'ROWS',length:required-props.gridProperties.rowCount+100}})}if(requests.length)await api(':batchUpdate',{method:'POST',body:JSON.stringify({requests})})}
+ if(!monthlyWriteCandidates.has(month))monthlyWriteCandidates.set(month,new Set());monthlyWriteCandidates.get(month).add(monthlyCore(snapshot));
+ await api('/values:batchUpdate',{method:'POST',body:JSON.stringify({valueInputOption:'RAW',data:updates})});
+ const verified=await api('/values/'+encodeURIComponent(`${STATE_TAB}!A${stateRow}:B${stateRow}`));
+ const saved=verified.values?.[0];if(saved?.[0]!==month)throw new Error('保存した対象月を検証できません');
+ let savedState;try{savedState=normalizeDepositHistory(JSON.parse(saved[1]))}catch(e){throw new Error('保存後の入金履歴を検証できません：'+e.message)}
+ if(monthlyCore(savedState)!==monthlyCore(snapshot))throw new Error('入金履歴の保存後検証に失敗しました');
+ monthlyBaseline[month]=saved[1];monthlyExtras[month]=state;monthlyWriteCandidates.delete(month);Object.assign(paymentRowIndex,newPaymentIndex);stateRowIndex[month]=stateRow;
+ cloudRows[month]=JSON.parse(JSON.stringify(snapshot));rebuildTaxHistory();
+}
+function enqueueSave(month,snapshot,rev){
+ const pending=pendingSaves.get(month);if(!pending||pending.rev<=rev)pendingSaves.set(month,{snapshot,rev});
+ writeChain=writeChain.catch(()=>{}).then(async()=>{
+  status('Googleに保存中…');await persist(month,snapshot);
+  if(pendingSaves.get(month)?.rev===rev)pendingSaves.delete(month);
+  if(rev===revision&&sel.value===month){status('Googleに保存済み');update()}
+  authSaveNeedsRetry=pendingSaves.size>0;$('retryDepositSave').hidden=!authSaveNeedsRetry;$('reloadDepositMonth').hidden=!authSaveNeedsRetry;
+ }).catch(e=>{status('保存失敗：'+e.message);cloudStatus('保存失敗：'+e.message+'。入力は保持しています。保存を再試行してください');$('retryDepositSave').hidden=false;$('reloadDepositMonth').hidden=false});return writeChain;
+}
+function save(){const month=sel.value;if(!loadedMonths.has(month))return;clearTimeout(saveTimer);const rev=++revision;pendingSaves.set(month,{snapshot:JSON.parse(JSON.stringify(data())),rev});status('変更あり・保存待ち…');saveTimer=setTimeout(()=>{saveTimer=null;const p=pendingSaves.get(month);if(p)enqueueSave(month,p.snapshot,p.rev)},800)}
+function flushPending(){if(saveTimer){clearTimeout(saveTimer);saveTimer=null;const p=pendingSaves.get(activeMonth);if(p)enqueueSave(activeMonth,p.snapshot,p.rev)}}
+$('retryDepositSave').addEventListener('click',()=>{if(saveTimer){flushPending();return}for(const [month,p] of pendingSaves)enqueueSave(month,p.snapshot,p.rev)});
+window.addEventListener('beforeunload',event=>{if(saveTimer||pendingSaves.size){event.preventDefault();event.returnValue=''}});
+
+$('reloadDepositMonth').addEventListener('click',async()=>{const month=sel.value;if(!confirm('この月の未保存の入力・履歴変更を破棄し、Googleに保存されている内容を読み直しますか？'))return;clearTimeout(saveTimer);saveTimer=null;await writeChain;pendingSaves.delete(month);monthlyWriteCandidates.delete(month);authSaveNeedsRetry=pendingSaves.size>0;$('retryDepositSave').hidden=!authSaveNeedsRetry;$('reloadDepositMonth').hidden=!authSaveNeedsRetry;loadedMonths.delete(month);await remoteLoad(month);if(!loadedMonths.has(month))requireLoginScreen('Googleから読み込めませんでした。シートに接続を押して再試行してください')});
+
 function rebuildTaxHistory(){taxHistory={};const bi=banks.findIndex(b=>b.fixedDeposit);if(bi<0)return;const ii=banks[bi].items.findIndex(i=>i[0].includes('固定資産税'));if(ii<0)return;for(const [month,d] of Object.entries(cloudRows))taxHistory[month]=n(d?.payments?.[bi]?.[ii])}
 async function remoteLoad(month){
  requireAuth();status('Googleから読み込み中…');lock(true);
- try{await writeChain;cloudRows=await readAll();rebuildTaxHistory();sessionData[month]=cloudRows[month]||defaults();loadedMonths.add(month);if(sel.value===month){render();lock(false);status('Googleから読み込み済み')}}
+ try{await writeChain;if(pendingSaves.size){status('保存失敗：未保存の入力があります。保存を再試行してください');$('retryDepositSave').hidden=false;lock(false);return}cloudRows=await readAll();rebuildTaxHistory();sessionData[month]=cloudRows[month]||defaults();loadedMonths.add(month);if(sel.value===month){render();lock(false);status('Googleから読み込み済み')}}
  catch(e){status('読み込みエラー：'+e.message);cloudStatus('接続エラー：'+e.message);lock(true)}
 }
-async function persist(month,snapshot){
- requireAuth();
- const updates=[];const appendRows=[];
- for(let bi=0;bi<banks.length;bi++)for(let ii=0;ii<banks[bi].items.length;ii++){
-  const item=banks[bi].items[ii],value=snapshot.payments[bi][ii];
-  const row=[month,banks[bi].name,item[0],value==null?'':value,item[2]||'',bi+'-'+ii,new Date().toISOString()];
-  const rowNum=paymentRowIndex[itemKey(month,bi,ii)];
-  if(rowNum)updates.push({range:`'${TAB}'!A${rowNum}:G${rowNum}`,values:[row]});
-  else appendRows.push(row);
- }
- if(updates.length)await api('/values:batchUpdate',{method:'POST',body:JSON.stringify({valueInputOption:'RAW',data:updates})});
- if(appendRows.length)await api('/values/'+encodeURIComponent(TAB+'!A:G')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',{method:'POST',body:JSON.stringify({values:appendRows})});
- const st=JSON.stringify({balances:snapshot.balances,unknown:snapshot.unknown,deposits:snapshot.deposits});
- if(stateRowIndex[month])await api('/values/'+encodeURIComponent(`${STATE_TAB}!A${stateRowIndex[month]}:B${stateRowIndex[month]}`)+'?valueInputOption=RAW',{method:'PUT',body:JSON.stringify({values:[[month,st]]})});
- else await api('/values/'+encodeURIComponent(STATE_TAB+'!A:B')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',{method:'POST',body:JSON.stringify({values:[[month,st]]})});
- // Refresh row positions after an append, to avoid duplicate rows on next save.
- cloudRows={...cloudRows,[month]:snapshot};rebuildTaxHistory();
- const [pRows,sRows]=await Promise.all([api('/values/'+encodeURIComponent(TAB+'!A1:F10000')),api('/values/'+encodeURIComponent(STATE_TAB+'!A1:A1000'))]);
- paymentRowIndex={};(pRows.values||[]).forEach((row,i)=>{if(row[0]&&/^(\d+)-(\d+)$/.test(row[5]||''))paymentRowIndex[row[0]+'|'+row[5]]=i+1});
- stateRowIndex={};(sRows.values||[]).forEach((row,i)=>{if(/^20\d{2}-/.test(row[0]||''))stateRowIndex[row[0]]=i+1});
-}
-function enqueueSave(month,snapshot,rev){
- writeChain=writeChain.catch(()=>{}).then(async()=>{
-  status('Googleに保存中…');await persist(month,snapshot);
-  if(rev===revision&&sel.value===month){status('Googleに保存済み');update()}
- }).catch(e=>{status('保存失敗：'+e.message);cloudStatus('保存失敗：'+e.message+'。画面を閉じずに確認してください')});
-}
-function save(){const month=sel.value;if(!loadedMonths.has(month))return;clearTimeout(saveTimer);status('変更あり・保存待ち…');const rev=++revision;saveTimer=setTimeout(()=>{saveTimer=null;enqueueSave(month,JSON.parse(JSON.stringify(sessionData[month])),rev)},800)}
-function flushPending(){if(saveTimer){clearTimeout(saveTimer);saveTimer=null;const month=activeMonth;enqueueSave(month,JSON.parse(JSON.stringify(sessionData[month])),revision)}}
 let authExpiresAt=0,authConnecting=false,authSaveNeedsRetry=false,authScreenRequired=true;
 function openAuthScreen(message){
  if(message)cloudStatus(message);
@@ -219,10 +276,14 @@ async function resumeAuth(){
  }else requireLoginScreen('Googleでログインすると前回のシートに自動接続します');
 }
 
-function defaults(){return{payments:banks.map(b=>b.items.map(i=>i[1])),balances:banks.map(()=>null),unknown:banks.map((_,i)=>i===6||i===8),deposits:banks.map(()=>0)}}
-function data(){let d=sessionData[sel.value];if(!d){d=defaults();sessionData[sel.value]=d}if(!d.unknown)d.unknown=banks.map(()=>false);return d}function n(v){return Number.isFinite(+v)?Math.max(0,+v):0}function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function render(){const d=data();const groups=document.getElementById('paymentGroups');groups.innerHTML=banks.map((b,bi)=>`<details class="accordion" ${bi===0?'open':''}><summary>${esc(b.name)}</summary><div class="items">${b.items.map((item,ii)=>`<div class="item"><label for="p-${bi}-${ii}">${esc(item[0])} ${item[2]==='fixed'?'<span class="fixed-tag">固定</span>':''}</label><input id="p-${bi}-${ii}" type="number" inputmode="numeric" min="0" placeholder="金額を入力" data-bi="${bi}" data-ii="${ii}" value="${d.payments[bi][ii]??''}"></div>`).join('')}${b.fixedDeposit?'<div class="reserve">固定資産税積立（毎月の予定額）<br><strong>¥3,948</strong><br><span class="reserve-total" id="reserveTotal">積立残額：計算中</span>※支払いではなく口座に残すお金です。実際の納税額は上の欄に、その月だけ入力してください。</div>':''}</div></details>`).join('');groups.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{d.payments[+el.dataset.bi][+el.dataset.ii]=el.value===''?null:n(el.value);update();save()}));const rows=document.getElementById('balanceRows');rows.innerHTML='<div class="balance head"><span>銀行</span><span>残高 / 不明</span><span>入金済み</span></div>'+banks.map((b,bi)=>`<div class="balance"><span>${esc(b.name)}</span><div class="balance-control"><label class="unknown-label"><input type="checkbox" data-kind="unknown" data-bi="${bi}" ${d.unknown[bi]?'checked':''}> 不明</label><input aria-label="${esc(b.name)} 残高" type="number" inputmode="numeric" min="0" data-kind="balances" data-bi="${bi}" value="${d.balances[bi]??''}" placeholder="0" ${d.unknown[bi]?'disabled':''}></div><input aria-label="${esc(b.name)} 入金済み" type="number" inputmode="numeric" min="0" data-kind="deposits" data-bi="${bi}" value="${d.deposits[bi]||''}" placeholder="0"></div>`).join('');rows.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{const bi=+el.dataset.bi;if(el.dataset.kind==='unknown'){d.unknown[bi]=el.checked;rows.querySelector(`input[data-kind="balances"][data-bi="${bi}"]`).disabled=el.checked}else{d[el.dataset.kind][bi]=el.value===''?null:n(el.value)}update();save()}));update()}
-function update(){const d=data();let total=0;let html='<div class="bank-row head"><span>銀行名</span><span>支払い予定</span><span>入金必要額</span></div>';banks.forEach((b,i)=>{const due=d.payments[i].reduce((s,v)=>s+n(v),0);const target=b.fixedDeposit?Math.max(b.fixedDeposit,due):due;const needed=Math.max(0,target-(b.fixedDeposit?0:(d.unknown[i]?0:n(d.balances[i])))-n(d.deposits[i]));total+=needed;html+=`<div class="bank-row"><span>${esc(b.name)}</span><span>${fmt(due)}</span><span class="short">${fmt(needed)}</span></div>`});document.getElementById('summaryRows').innerHTML=html;document.getElementById('total').textContent=fmt(total);const r=document.getElementById('reserveTotal');if(r){const [y,m]=sel.value.split('-').map(Number);const elapsed=(y-2026)*12+m-7;let reserve=27673+Math.max(0,elapsed)*3948;for(const [month,paid] of Object.entries(taxHistory)){if(month>='2026-08'&&month<=sel.value)reserve-=n(paid)}if(d.payments?.[banks.findIndex(b=>b.fixedDeposit)])reserve-=n(d.payments[banks.findIndex(b=>b.fixedDeposit)]?.[banks.find(b=>b.fixedDeposit)?.items.findIndex(i=>i[0].includes('固定資産税'))])-(n(taxHistory[sel.value]));r.textContent='積立残額（概算）：'+fmt(reserve)}}sel.addEventListener('change',async()=>{if(!sheetId||!accessToken){sel.value=activeMonth;return}flushPending();activeMonth=sel.value;await remoteLoad(sel.value)});
-$('reset').addEventListener('click',()=>{if(!loadedMonths.has(sel.value))return;if(confirm('この月の入力を初期値に戻しますか？')){sessionData[sel.value]=defaults();render();save()}});
+function defaults(){return{payments:banks.map(b=>b.items.map(i=>i[1])),balances:banks.map(()=>null),unknown:banks.map((_,i)=>i===6||i===8),deposits:banks.map(()=>0),depositHistory:banks.map(()=>[]),depositHistoryVersion:1}}
+function data(){let d=sessionData[sel.value];if(!d){d=defaults();sessionData[sel.value]=d}if(!d.unknown)d.unknown=banks.map(()=>false);return normalizeDepositHistory(d)}function n(v){return Number.isFinite(+v)?Math.max(0,+v):0}function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){const d=data();const groups=document.getElementById('paymentGroups');groups.innerHTML=banks.map((b,bi)=>`<details class="accordion" ${bi===0?'open':''}><summary>${esc(b.name)}</summary><div class="items">${b.items.map((item,ii)=>`<div class="item"><label for="p-${bi}-${ii}">${esc(item[0])} ${item[2]==='fixed'?'<span class="fixed-tag">固定</span>':''}</label><input id="p-${bi}-${ii}" type="number" inputmode="numeric" min="0" placeholder="金額を入力" data-bi="${bi}" data-ii="${ii}" value="${d.payments[bi][ii]??''}"></div>`).join('')}${b.fixedDeposit?'<div class="reserve">固定資産税積立（毎月の予定額）<br><strong>¥3,948</strong><br><span class="reserve-total" id="reserveTotal">積立残額：計算中</span>※支払いではなく口座に残すお金です。実際の納税額は上の欄に、その月だけ入力してください。</div>':''}</div></details>`).join('');groups.querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{d.payments[+el.dataset.bi][+el.dataset.ii]=el.value===''?null:n(el.value);update();save()}));renderBalanceRows();update()}
+function update(){const d=data();let total=0;let html='<div class="bank-row head"><span>銀行名</span><span>支払い予定</span><span>入金必要額</span></div>';banks.forEach((b,i)=>{const due=d.payments[i].reduce((s,v)=>s+n(v),0);const target=b.fixedDeposit?Math.max(b.fixedDeposit,due):due;const needed=Math.max(0,target-(b.fixedDeposit?0:(d.unknown[i]?0:n(d.balances[i])))-n(d.deposits[i]));total+=needed;html+=`<div class="bank-row"><span>${esc(b.name)}</span><span>${fmt(due)}</span><span class="short">${fmt(needed)}</span></div>`});document.getElementById('summaryRows').innerHTML=html;document.getElementById('total').textContent=fmt(total);const r=document.getElementById('reserveTotal');if(r){const [y,m]=sel.value.split('-').map(Number);const elapsed=(y-2026)*12+m-7;let reserve=27673+Math.max(0,elapsed)*3948;for(const [month,paid] of Object.entries(taxHistory)){if(month>='2026-08'&&month<=sel.value)reserve-=n(paid)}if(d.payments?.[banks.findIndex(b=>b.fixedDeposit)])reserve-=n(d.payments[banks.findIndex(b=>b.fixedDeposit)]?.[banks.find(b=>b.fixedDeposit)?.items.findIndex(i=>i[0].includes('固定資産税'))])-(n(taxHistory[sel.value]));r.textContent='積立残額（概算）：'+fmt(reserve)}}sel.addEventListener('change',async()=>{
+ if(!sheetId||!accessToken){sel.value=activeMonth;return}
+ const next=sel.value;sel.value=activeMonth;sel.disabled=true;lock(true);
+ try{flushPending();await writeChain;if(pendingSaves.size){status('保存失敗：未保存の入金・入力があります。再試行してから月を変更してください');$('retryDepositSave').hidden=false;return}sel.value=next;activeMonth=next;await remoteLoad(next)}finally{sel.disabled=false;if(sel.value!==next)lock(!accessToken)}
+});
+$('reset').addEventListener('click',()=>{if(!loadedMonths.has(sel.value))return;if(confirm('支払い金額と残高を初期値に戻しますか？入金履歴と入金済み合計は残します。')){const current=data(),next=defaults();next.depositHistory=JSON.parse(JSON.stringify(current.depositHistory));next.deposits=[...current.deposits];sessionData[sel.value]=next;render();save()}});
 status('Googleでログインすると前回のシートに自動接続します');lock(true);resumeAuth();
 </script></body></html>
